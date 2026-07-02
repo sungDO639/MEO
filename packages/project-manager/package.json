@@ -1,0 +1,20 @@
+```json
+{
+  "name": "@meo/project-manager",
+  "version": "2.0.0",
+  "main": "dist/ProjectManager.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@meo/shared": "*",
+    "@meo/ai-engine": "*",
+    "@meo/code-analyzer": "*",
+    "@meo/sandbox": "*",
+    "@prisma/client": "^5.8.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
+```
