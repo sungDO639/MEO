@@ -1,0 +1,21 @@
+```dockerfile
+FROM node:20-alpine
+RUN apk add --no-cache docker-cli
+WORKDIR /app
+COPY package*.json ./
+COPY packages/server/package*.json ./packages/server/
+COPY packages/shared/package*.json ./packages/shared/
+RUN npm install
+COPY packages/shared ./packages/shared
+COPY packages/ai-engine ./packages/ai-engine
+COPY packages/code-analyzer ./packages/code-analyzer
+COPY packages/sandbox ./packages/sandbox
+COPY packages/server ./packages/server
+RUN npm run build:shared
+RUN cd packages/server && npx prisma generate
+RUN cd packages/server && npm run build
+EXPOSE 3001
+CMD ["node", "packages/server/dist/main.js"]
+```
+
+---
