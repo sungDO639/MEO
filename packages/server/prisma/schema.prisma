@@ -1,0 +1,66 @@
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  type        String
+  path        String?
+  status      String    @default("active")
+  config      Json?
+  messages    Message[]
+  files       File[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  @@index([status])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  role      String
+  content   String
+  metadata  Json?
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  createdAt DateTime @default(now())
+  @@index([projectId, createdAt])
+}
+
+model File {
+  id        String   @id @default(uuid())
+  path      String
+  name      String
+  content   String   @db.Text
+  language  String?
+  size      Int?
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([projectId, path])
+  @@index([projectId])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value Json
+}
+```
+
+---
