@@ -1,0 +1,16 @@
+```json
+{
+  "name": "@meo/code-analyzer",
+  "version": "2.0.0",
+  "main": "dist/ProjectAnalyzer.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@meo/shared": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
+```
