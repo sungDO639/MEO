@@ -1,0 +1,18 @@
+```json
+{
+  "name": "@meo/ai-engine",
+  "version": "2.0.0",
+  "main": "dist/core/MeoEngine.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@meo/shared": "*",
+    "@meo/code-analyzer": "*",
+    "@meo/sandbox": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
+```
