@@ -1,24 +1,53 @@
-```typescript
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { SendMessageDto } from './dtos/send-message.dto';
+import { CreateProjectDto } from './dtos/create-project.dto';
+import { ModifyProjectDto } from './dtos/modify-project.dto';
 
 @Controller('api/chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post('message')
-  async sendMessage(@Body() body: { message: string; projectId: string; history: any[] }) {
-    return this.chatService.processMessage(body.message, body.projectId, body.history);
+  @HttpCode(HttpStatus.OK)
+  async sendMessage(@Body() body: SendMessageDto) {
+    return this.chatService.processMessage(
+      body.message,
+      body.projectId,
+      body.history,
+    );
   }
 
   @Post('create-project')
-  async createProject(@Body() body: { description: string; type: string; name: string }) {
-    return this.chatService.createProject(body.description, body.type, body.name);
+  @HttpCode(HttpStatus.CREATED)
+  async createProject(@Body() body: CreateProjectDto) {
+    return this.chatService.createProject(
+      body.description,
+      body.type,
+      body.name,
+    );
   }
 
   @Post('modify/:projectId')
-  async modifyProject(@Param('projectId') projectId: string, @Body() body: { instruction: string }) {
+  @HttpCode(HttpStatus.OK)
+  async modifyProject(
+    @Param('projectId') projectId: string,
+    @Body() body: ModifyProjectDto,
+  ) {
     return this.chatService.modifyProject(projectId, body.instruction);
   }
+
+  @Get('project/:projectId')
+  @HttpCode(HttpStatus.OK)
+  async getProject(@Param('projectId') projectId: string) {
+    return this.chatService.getProjectWithMessages(projectId);
+  }
 }
-```
