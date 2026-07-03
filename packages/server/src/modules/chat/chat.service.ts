@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, ForbiddenException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
@@ -7,7 +7,7 @@ export class ChatService {
 
   constructor(private prisma: PrismaClient) {}
 
-  async processMessage(message: string, projectId: string, history: any[]) {
+  async processMessage(message: string, projectId: string, userId: string, history: any[]) {
     // ✅ Validate input
     if (!message || !message.trim()) {
       throw new BadRequestException('Message cannot be empty');
@@ -15,13 +15,21 @@ export class ChatService {
     if (!projectId) {
       throw new BadRequestException('ProjectId is required');
     }
+    if (!userId) {
+      throw new BadRequestException('UserId is required');
+    }
 
-    // ✅ Check project exists
+    // ✅ Check project exists and user has access
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
     });
     if (!project) {
       throw new NotFoundException(`Project ${projectId} not found`);
+    }
+
+    // ✅ Check if user is the owner or has access
+    if (project.ownerId !== userId) {
+      throw new ForbiddenException('You do not have access to this project');
     }
 
     try {
@@ -31,6 +39,7 @@ export class ChatService {
           role: 'user',
           content: message.trim(),
           projectId,
+          authorId: userId,
           metadata: { history: history || [] },
         },
       });
@@ -44,6 +53,7 @@ export class ChatService {
           role: 'assistant',
           content: aiResponse,
           projectId,
+          authorId: userId, // System user ID or AI user
           metadata: { fromAI: true },
         },
       });
@@ -60,13 +70,16 @@ export class ChatService {
     }
   }
 
-  async createProject(description: string, type: string, name: string) {
+  async createProject(description: string, type: string, name: string, userId: string) {
     // ✅ Validate input
     if (!name || !name.trim()) {
       throw new BadRequestException('Project name is required');
     }
     if (!type || !type.trim()) {
       throw new BadRequestException('Project type is required');
+    }
+    if (!userId) {
+      throw new BadRequestException('UserId is required');
     }
 
     try {
@@ -76,10 +89,11 @@ export class ChatService {
           description: description ? description.trim() : null,
           type: type.trim(),
           status: 'active',
+          ownerId: userId,
         },
       });
 
-      this.logger.log(`Project created: ${project.id}`);
+      this.logger.log(`Project created by user ${userId}: ${project.id}`);
       return project;
     } catch (error) {
       this.logger.error(`Error creating project: ${error.message}`, error.stack);
@@ -87,7 +101,7 @@ export class ChatService {
     }
   }
 
-  async modifyProject(projectId: string, instruction: string) {
+  async modifyProject(projectId: string, instruction: string, userId: string) {
     // ✅ Validate input
     if (!projectId) {
       throw new BadRequestException('ProjectId is required');
@@ -95,13 +109,20 @@ export class ChatService {
     if (!instruction || !instruction.trim()) {
       throw new BadRequestException('Instruction is required');
     }
+    if (!userId) {
+      throw new BadRequestException('UserId is required');
+    }
 
-    // ✅ Check project exists
+    // ✅ Check project exists and user has access
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
     });
     if (!project) {
       throw new NotFoundException(`Project ${projectId} not found`);
+    }
+
+    if (project.ownerId !== userId) {
+      throw new ForbiddenException('You do not have access to modify this project');
     }
 
     try {
@@ -111,6 +132,7 @@ export class ChatService {
           role: 'user',
           content: instruction.trim(),
           projectId,
+          authorId: userId,
           metadata: { type: 'modification' },
         },
       });
@@ -129,9 +151,12 @@ export class ChatService {
     }
   }
 
-  async getProjectWithMessages(projectId: string) {
+  async getProjectWithMessages(projectId: string, userId: string) {
     if (!projectId) {
       throw new BadRequestException('ProjectId is required');
+    }
+    if (!userId) {
+      throw new BadRequestException('UserId is required');
     }
 
     try {
@@ -145,6 +170,11 @@ export class ChatService {
 
       if (!project) {
         throw new NotFoundException(`Project ${projectId} not found`);
+      }
+
+      // ✅ Check access
+      if (project.ownerId !== userId) {
+        throw new ForbiddenException('You do not have access to this project');
       }
 
       return project;
